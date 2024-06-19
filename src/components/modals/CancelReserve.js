@@ -1,22 +1,27 @@
 import React, {useContext} from 'react';
 import {Button, Modal} from "react-bootstrap";
 import {Context} from "../../index";
+import {format} from 'date-fns'; // Импорт функции format
 
-import {updateCar} from "../../http/carAPI";
+import {observer} from "mobx-react-lite";
+import {deleteReserve} from "../../http/reserveAPI";
 
-const CancelReserve = ({show, onHide, car_item, onSubmit}) => {
-    const {car, brand, user} = useContext(Context)
+const CancelReserve = observer (({show, onHide, car_item, onSubmit, reserve_item}) => {
+    const {brand, model} = useContext(Context)
 
-    const handleSubmit = () => {
-        const formDataE = new FormData();
-        formDataE.append("status", 'available');
-        formDataE.append("user_id", 0);
-        updateCar(car_item.id, formDataE).then(data => {
-            onHide();
-            onSubmit();
-        }).catch(error => {
-            console.error('Ошибка отмены записи:', error.message);
-        });
+    const handleSubmit = async () => {
+        try{
+            await deleteReserve(reserve_item.id);
+        onHide();
+        onSubmit();
+        }catch(error){
+            if (error.response && error.response.data && error.response.data.message) {
+                alert(error.response.data.message);
+            } else {
+                alert('Ошибка при удалении резервации');
+            }
+        }
+
     }
 
 
@@ -30,7 +35,7 @@ const CancelReserve = ({show, onHide, car_item, onSubmit}) => {
             </Modal.Header>
             <Modal.Body>
                 Вы уверены что хотите отменить запись на тест драйв
-                машины {brand.getBrandTitleById(car_item.brand_id) + ' ' + car_item.model}?
+                машины {brand.getBrandTitleById(car_item.brand_id) + ' ' + model.getModelTitleById(car_item.model_id)} c {format(new Date(reserve_item.start_date), 'dd.MM.yyyy HH:mm')} до {format(new Date(reserve_item.end_date), 'dd.MM.yyyy HH:mm')}?
             </Modal.Body>
             <Modal.Footer>
                 <Button variant="secondary" onClick={onHide}>
@@ -40,6 +45,6 @@ const CancelReserve = ({show, onHide, car_item, onSubmit}) => {
             </Modal.Footer>
         </Modal>
     );
-};
+});
 
 export default CancelReserve;

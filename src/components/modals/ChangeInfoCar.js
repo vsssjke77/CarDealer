@@ -1,16 +1,19 @@
-import React, {useContext, useState} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {Button, Dropdown, Form, Modal} from "react-bootstrap";
 import {Context} from "../../index";
 import {updateCar} from "../../http/carAPI";
+import {fetchModelsForBrand} from "../../http/modelAPI";
+import {observer} from "mobx-react-lite";
 
-const ChangeInfoCar = ({show, onHide, car_change, onCarChanged}) => {
+const ChangeInfoCar = observer(({show, onHide, car_change, onCarChanged}) => {
 
-    const {car, brand} = useContext(Context);
+    const {car, brand, model} = useContext(Context);
     const [selectedStatus, setSelectedStatus] = useState(car_change.status);
     const [selectedBrand, setSelectedBrand] = useState(brand.getBrandTitleById(car_change.brand_id));
 
     const [selectedBrandId, setSelectedBrandId] = useState(car_change.brand_id);
-    const [model, setModel] = useState(car_change.model)
+    const [selectedModel, setSelectedModel] = useState(model.getModelTitleById(car_change.model_id));
+    const [selectedModelId, setSelectedModelId] = useState(car_change.model_id)
     const [price, setPrice] = useState(car_change.price)
     const [year, setYear] = useState(car_change.year)
     const [horses, setHorses] = useState(car_change.horses)
@@ -18,15 +21,31 @@ const ChangeInfoCar = ({show, onHide, car_change, onCarChanged}) => {
     const [mileage, setMileage] = useState(car_change.mileage)
     const [file, setFile] = useState(null)
 
+
+    useEffect(() => {
+            fetchModelsForBrand(selectedBrandId).then(data => model.setModelsForBrand(data))
+        }
+        , [model]);
+
     const handleSelectStatus = (status) => {
         setSelectedStatus(status);
         // Здесь вы можете добавить логику для обновления статуса автомобиля в вашем хранилище или базе данных
     };
 
 
-    const handleSelect = (brandId, brandTitle) => {
+    const handleSelect = async (brandId, brandTitle) => {
         setSelectedBrand(brandTitle);
-        setSelectedBrandId(brandId)
+        setSelectedBrandId(brandId);
+        const models = await fetchModelsForBrand(brandId);
+        model.setModelsForBrand(models);
+        setSelectedModel('Выберите модель автомобиля'); // Reset model selection when brand changes
+        setSelectedModelId(null);
+    };
+
+    const handleSelectModel = (modelId, modelTitle) => {
+        setSelectedModel(modelTitle);
+        setSelectedModelId(modelId)
+
     };
 
     const selectFile = e => {
@@ -34,10 +53,21 @@ const ChangeInfoCar = ({show, onHide, car_change, onCarChanged}) => {
         setFile(e.target.files[0]);
     };
 
-    const editCar = () => {
+    const handleKeyDown = (e) => {
+        if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+'|| e.key === '/' || e.key === '*') {
+            e.preventDefault();
+        }
+    };
+    const handleKeyDownVin = (e) => {
+        if (e.key === '-' || e.key === '+' || e.key === '/' || e.key === '*') {
+            e.preventDefault();
+        }
+    };
+
+    const editCar = async () => {
         const formDataE = new FormData();
         formDataE.append("brand_id", selectedBrandId);
-        formDataE.append("model", model);
+        formDataE.append("model_id", selectedModelId);
         formDataE.append("price", `${price}`);
         formDataE.append("year", `${year}`);
         formDataE.append("horses", `${horses}`);
@@ -45,10 +75,17 @@ const ChangeInfoCar = ({show, onHide, car_change, onCarChanged}) => {
         formDataE.append("mileage", `${mileage}`);
         formDataE.append("status", selectedStatus);
         formDataE.append("img", file);
-        updateCar(car_change.id, formDataE).then(data => onHide());
-        onCarChanged();
-        onHide();
+        try {
+            await updateCar(car_change.id, formDataE).then(data => onHide());
+            onCarChanged();
+            onHide();
+        } catch (e) {
+            alert(e.response.data.message);
+        }
+
     }
+
+
 
     return (
         <Modal
@@ -65,7 +102,7 @@ const ChangeInfoCar = ({show, onHide, car_change, onCarChanged}) => {
             <Modal.Body>
                 <Form onSubmit={onHide}>
                     <div className=" d-flex align-content-center" style={{gap: 4}}>
-                        <div style={{display: "flex", alignSelf: "center", fontSize: 20}}>Марка:</div>
+                        <div style={{display: "flex", alignSelf: "center", fontSize: 20, width: "20%"}}>Марка:</div>
                         <Dropdown>
                             <Dropdown.Toggle>{selectedBrand}</Dropdown.Toggle>
                             <Dropdown.Menu>
@@ -80,15 +117,21 @@ const ChangeInfoCar = ({show, onHide, car_change, onCarChanged}) => {
                     </div>
 
                     <div className="mt-1 d-flex align-content-center" style={{gap: 4}}>
-                        <div style={{display: "flex", alignSelf: "center", fontSize: 20, width: "25%"}}>
+                        <div style={{display: "flex", alignSelf: "center", fontSize: 20, width: "20%"}}>
                             Модель:
                         </div>
-                        <Form.Control
-                            className={'mt-2'}
-                            placeholder={"Введите модель автомобиля"}
-                            value={model}
-                            onChange={(e) => setModel(e.target.value)}
-                        />
+                        <Dropdown className={"mt-2"}>
+                            <Dropdown.Toggle>{selectedModel}</Dropdown.Toggle>
+                            <Dropdown.Menu>
+                                {model.modelsForBrand.map((model) => (
+                                    <Dropdown.Item key={model.id}
+                                                   onClick={() => handleSelectModel(model.id, model.title)}>
+                                        {model.title}
+                                    </Dropdown.Item>
+                                ))}
+
+                            </Dropdown.Menu>
+                        </Dropdown>
                     </div>
 
 
@@ -100,6 +143,7 @@ const ChangeInfoCar = ({show, onHide, car_change, onCarChanged}) => {
                             type={"number"}
                             value={price}
                             onChange={(e) => setPrice(e.target.value)}
+                            onKeyDown={handleKeyDown}
                         />
                     </div>
                     <div className=" mt-2 d-flex align-content-center" style={{gap: 4}}>
@@ -110,6 +154,7 @@ const ChangeInfoCar = ({show, onHide, car_change, onCarChanged}) => {
                             type={"number"}
                             value={year}
                             onChange={(e) => setYear(e.target.value)}
+                            onKeyDown={handleKeyDown}
                         />
                     </div>
 
@@ -124,6 +169,7 @@ const ChangeInfoCar = ({show, onHide, car_change, onCarChanged}) => {
                             type={"number"}
                             value={horses}
                             onChange={(e) => setHorses(e.target.value)}
+                            onKeyDown={handleKeyDown}
                         />
                     </div>
                     <div className=" mt-2 d-flex align-content-center" style={{gap: 4}}>
@@ -134,6 +180,7 @@ const ChangeInfoCar = ({show, onHide, car_change, onCarChanged}) => {
                             placeholder={"Введите vin номер автомобиля"}
                             value={vin}
                             onChange={(e) => setVin(e.target.value)}
+                            onKeyDown={handleKeyDownVin}
                         />
                     </div>
 
@@ -146,18 +193,23 @@ const ChangeInfoCar = ({show, onHide, car_change, onCarChanged}) => {
                             type={"number"}
                             value={mileage}
                             onChange={(e) => setMileage(e.target.value)}
+                            onKeyDown={handleKeyDown}
                         />
                     </div>
-                    <Dropdown className={"mt-2"}>
-                        <Dropdown.Toggle>{selectedStatus || 'Выберите статус автомобиля'}</Dropdown.Toggle>
-                        <Dropdown.Menu>
-                            {car.statuses.map((status, index) => (
-                                <Dropdown.Item key={index} onClick={() => handleSelectStatus(status)}>
-                                    {status}
-                                </Dropdown.Item>
-                            ))}
-                        </Dropdown.Menu>
-                    </Dropdown>
+                    <div className=" mt-2 d-flex align-content-center" style={{gap: 4}}>
+                        <div style={{display: "flex", alignSelf: "center", fontSize: 20, width: "20%"}}>Статус:</div>
+                        <Dropdown className={"mt-2"}>
+                            <Dropdown.Toggle>{selectedStatus || 'Выберите статус автомобиля'}</Dropdown.Toggle>
+                            <Dropdown.Menu>
+                                {car.statuses.map((status, index) => (
+                                    <Dropdown.Item key={index} onClick={() => handleSelectStatus(status)}>
+                                        {status}
+                                    </Dropdown.Item>
+                                ))}
+                            </Dropdown.Menu>
+                        </Dropdown>
+                    </div>
+
                     <Form.Control
                         className={'mt-2'}
                         placeholder={"Загрузите фото автомобиля"}
@@ -173,7 +225,7 @@ const ChangeInfoCar = ({show, onHide, car_change, onCarChanged}) => {
             </Modal.Footer>
         </Modal>
     );
-};
+});
 
 export default ChangeInfoCar;
 

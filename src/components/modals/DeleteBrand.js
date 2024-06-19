@@ -5,7 +5,7 @@ import {Context} from "../../index";
 
 const DeleteBrand = ({show, onHide, onBrandChanged}) => {
     const {brand} = useContext(Context)
-    const [selectedBrand, setSelectedBrand] = React.useState('Выбрите марку');
+    const [selectedBrand, setSelectedBrand] = React.useState('Выберите марку');
     const [selectedBrandId, setSelectedBrandId] = useState(0);
 
 
@@ -20,21 +20,26 @@ const DeleteBrand = ({show, onHide, onBrandChanged}) => {
             onHide(); // Закрытие модального окна после успешного добавления
             onBrandChanged();
         } catch (error) {
-            console.error("Ошибка при удалении марки:", error);
-            // Добавьте обработку ошибки, если необходимо
+            if (error.response && error.response.data && error.response.data.message) {
+                alert(error.response.data.message);
+            } else {
+                alert('Ошибка при удалении марки');
+            }
         }
     };
     const handleExit = async () => {
+        setSelectedBrand('Выберите марку');
+        setSelectedBrandId(0);
         onHide();
-        setSelectedBrand('Выбрите марк');
+
     }
 
     return (
         <Modal
             show={show}
             onHide={onHide}
-          size="lg"
-          centered
+            size="lg"
+            centered
         >
             <Modal.Header closeButton>
                 <Modal.Title id="contained-modal-title-vcenter">
@@ -58,7 +63,7 @@ const DeleteBrand = ({show, onHide, onBrandChanged}) => {
                 </Form>
             </Modal.Body>
             <Modal.Footer>
-                <Button variant={"outline-danger"} onClick={handleExit } >Закрыть</Button>
+                <Button variant={"outline-danger"} onClick={handleExit}>Закрыть</Button>
                 <Button variant={"outline-success"} onClick={handleSubmit}>Удалить</Button>
             </Modal.Footer>
         </Modal>

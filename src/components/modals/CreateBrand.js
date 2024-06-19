@@ -8,15 +8,21 @@ const CreateBrand = ({show, onHide, onBrandChanged}) => {
     const handleSubmit = async () => {
         try {
             const data = await createBrand(title);
-            console.log(data); // Добавьте обработку результата, если необходимо
+            console.log(data);
             onHide(); // Закрытие модального окна после успешного добавления
             onBrandChanged();
             setTitle('');
-        } catch (error) {
-            console.error("Ошибка при добавлении записи ТО:", error);
-            // Добавьте обработку ошибки, если необходимо
+        } catch (e) {
+            alert(e.response.data.message);
         }
     };
+
+    const handleClose = () => {
+        setTitle('');
+        onHide(); // Закрытие модального окна после успешного добавления
+
+    };
+
 
     return (
         <Modal
@@ -41,7 +47,7 @@ const CreateBrand = ({show, onHide, onBrandChanged}) => {
                 </Form>
             </Modal.Body>
             <Modal.Footer>
-                <Button variant={"outline-danger"} onClick={onHide}>Закрыть</Button>
+                <Button variant={"outline-danger"} onClick={handleClose}>Закрыть</Button>
                 <Button variant={"outline-success"} onClick={handleSubmit}>Добавить</Button>
             </Modal.Footer>
         </Modal>

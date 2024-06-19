@@ -13,10 +13,12 @@ import del_icon from "../assets/del_icon.png"
 import ChangeMaintenance from "../components/modals/ChangeMaintenance";
 import DeleteMaintenance from "../components/modals/DeleteMaintenance";
 import {observer} from "mobx-react-lite";
+import {fetchModels} from "../http/modelAPI";
+import {fetchReservesForCar, fetchReservesForUser} from "../http/reserveAPI";
 
 
 const CarPage = observer(() => {
-    const {user, brand, part} = useContext(Context);
+    const {user, brand, part,model,reserve} = useContext(Context);
     const [reserveVisible, setReserveVisible] = useState(false);
     const [carMaintenance, setCarMaintenance] = useState([]);
 
@@ -27,23 +29,27 @@ const CarPage = observer(() => {
     const [deleteMaintenanceVisible, setDeleteMaintenanceVisible] = useState(false);
 
     const [dataChanged, setDataChanged] = useState(false); // Состояние для отслеживания изменений в данных
-    const [reserved, setReserved] = useState(false);
 
     const {id} = useParams();
-    useEffect(() => {
-        fetchBrands().then(data => brand.setBrands(data))
-        fetchMaintenancesForCar(id).then(data => setCarMaintenance(data))
-        fetchParts().then(data => part.setParts(data))
-        setDataChanged(false);
-    }, [id, brand, part, dataChanged]);
-
 
     useEffect(() => {
         fetchOneCar(id).then(data => {
             setCar(data);
-            setReserved(car_item.status === 'reserved'  )
         });
     }, [id]);
+
+    useEffect(() => {
+        fetchBrands().then(data => brand.setBrands(data))
+        fetchModels().then(data => model.setModels(data))
+        fetchMaintenancesForCar(id).then(data => setCarMaintenance(data))
+        fetchParts().then(data => part.setParts(data))
+        fetchReservesForCar(id).then(data => reserve.setReservesForCar(data));
+            fetchReservesForUser(user.id).then(data => reserve.setReservesForUser(data));
+        setDataChanged(false);
+    }, [id, brand, part, dataChanged,reserve,car_item,user]);
+
+
+
 
     if (!car_item.id) {
         return (
@@ -71,8 +77,17 @@ const CarPage = observer(() => {
         setDataChanged(!dataChanged); // Обновляем состояние для вызова useEffect
     };
 
+    const formatVin = (vin) => {
+        if (vin.length <= 6) {
+            return vin;
+        }
+        const firstPart = vin.substring(0, 3);
+        const lastPart = vin.substring(vin.length - 3);
+        const stars = '*'.repeat(vin.length - 6);
+        return `${firstPart}${stars}${lastPart}`;
+    };
+
     const handleDataChanged = () => {
-        setReserved(true);
         setDataChanged(!dataChanged); // Обновляем состояние для вызова useEffect
     };
 
@@ -83,7 +98,7 @@ const CarPage = observer(() => {
 
             <Row className="justify-content-between">
                 <Col md={4}>
-                    <h2 style={{color: 'white'}}>{brand.getBrandTitleById(car_item.brand_id) + ' ' + car_item.model} </h2>
+                    <h2 style={{color: 'white'}}>{brand.getBrandTitleById(car_item.brand_id) + ' ' + model.getModelTitleById(car_item.model_id)} </h2>
                     <h2 style={{color: 'white'}} className={"mt-2"}>{car_item.price.toLocaleString('ru-RU', {
                         style: 'currency',
                         currency: 'RUB',
@@ -93,10 +108,10 @@ const CarPage = observer(() => {
                     <h2 style={{color: 'white'}} className={"mt-2"}>Характеристики</h2>
                     <p style={{color: 'white'}}>Год производства:{" " + car_item.year}</p>
                     <p style={{color: 'white'}}>Мощность двигателя (л.с.):{" " + car_item.horses}</p>
-                    <p style={{color: 'white'}}>Vin номер:{" " + car_item.vin}</p>
+                    <p style={{color: 'white'}}>Vin номер:{" " + formatVin(car_item.vin)}</p>
                     <p style={{color: 'white'}}>Пробег:{" " + car_item.mileage + ' км'}</p>
 
-                    {user.isAuth && !user.isAdmin && car_item && !reserved && car_item.status === 'available' &&
+                    {user.isAuth && !user.isAdmin && car_item  &&
                         <Button className={"mb-2"} style={{width: "80%"}} onClick={() => setReserveVisible(true)}>Записаться
                             на тест–драйв</Button>}
                     <AcceptReserve show={reserveVisible} onHide={() => {

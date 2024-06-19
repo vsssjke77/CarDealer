@@ -25,6 +25,7 @@ const Auth = observer(() => {
 
             }
             user.setRole(data.role);
+            user.setId(data.id);
             user.setUser(user);
             user.setIsAuth(true)
             navigate(CATALOG_ROUTE);

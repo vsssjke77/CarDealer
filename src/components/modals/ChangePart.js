@@ -10,9 +10,7 @@ const ChangeBrand = observer(({show, onHide, onPartChanged}) => {
     const [price, setPrice] = useState('');
     const [selectedPart, setSelectedPart] = useState(null);
 
-    useEffect(() => {
-        fetchParts().then(data => part.setParts(data));
-    }, [part]);
+
 
     const handleSelect = (part) => {
         setSelectedPart(part);
@@ -29,7 +27,7 @@ const ChangeBrand = observer(({show, onHide, onPartChanged}) => {
             onHide();
             onPartChanged();
         } catch (error) {
-            console.error("Ошибка при обновлении детали:", error);
+            alert(error.response.data.message);
         }
     };
 
@@ -38,6 +36,12 @@ const ChangeBrand = observer(({show, onHide, onPartChanged}) => {
         setSelectedPart(null);
         setName('');
         setPrice('');
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+'|| e.key === '/' || e.key === '*') {
+            e.preventDefault();
+        }
     };
 
     return (
@@ -76,6 +80,7 @@ const ChangeBrand = observer(({show, onHide, onPartChanged}) => {
                         type="number"
                         value={price}
                         onChange={(e) => setPrice(e.target.value)}
+                        onKeyDown={handleKeyDown}
                     />
                 </Form>
             </Modal.Body>

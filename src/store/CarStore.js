@@ -7,7 +7,6 @@ export default class CarStore{
         this._filters = {};
         this._statuses =
             ['available',
-                'reserved',
                 'maintenance',
                 'sold']
         makeAutoObservable(this);

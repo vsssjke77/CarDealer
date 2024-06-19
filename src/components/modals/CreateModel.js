@@ -1,51 +1,62 @@
 import React, {useContext, useState} from 'react';
 import {Button, Dropdown, Form, Modal} from "react-bootstrap";
-import {updateBrand} from "../../http/brandAPI";
+
 import {Context} from "../../index";
+import {createModel} from "../../http/modelAPI";
+import {observer} from "mobx-react-lite";
 
-const ChangeBrand = ({show, onHide, onBrandChanged}) => {
-    const {brand} = useContext(Context)
+const CreateModel = observer (({show, onHide, onModelChanged}) => {
+    const {brand} = useContext(Context);
+
+
     const [title, setTitle] = React.useState('');
-    const [selectedBrand, setSelectedBrand] = React.useState('Выбрите бренд');
-    const [selectedBrandId, setSelectedBrandId] = useState(0);
-
+    const [selectedBrand, setSelectedBrand] = useState('Выберите марку автомобиля');
+    const [selectedBrandId, setSelectedBrandId] = useState();
 
     const handleSelect = (brandId, brandTitle) => {
         setSelectedBrand(brandTitle);
         setSelectedBrandId(brandId)
+        console.log(brandId);
     };
+
     const handleSubmit = async () => {
     try {
-        await updateBrand(selectedBrandId, title);
-        setSelectedBrand('Выберите бренд');
-        setTitle('');
+        await createModel( title,  selectedBrandId );
         onHide(); // Закрытие модального окна после успешного добавления
-        onBrandChanged();
+        onModelChanged();
+        resetForm();
     } catch (error) {
-        console.error("Ошибка при изменении марки:", error);
+        console.error("Ошибка при добавлении модели:", error);
         if (error.response && error.response.data && error.response.data.message) {
             alert(error.response.data.message);
         } else {
-            alert('Ошибка при изменении марки');
+            alert('Ошибка при добавлении модели');
         }
     }
 };
-    const handleExit = async () => {
-        onHide();
-        setSelectedBrand('Выбрите бренд');
+
+    const handleClose = () => {
+        resetForm();
+        onHide(); // Закрытие модального окна после успешного добавления
+
+    };
+
+    const resetForm = () => {
         setTitle('');
-    }
+        setSelectedBrand('Выберите марку автомобиля');
+        setSelectedBrandId(0);
+    };
 
     return (
         <Modal
             show={show}
             onHide={onHide}
-          size="lg"
-          centered
+            size="lg"
+            centered
         >
             <Modal.Header closeButton>
                 <Modal.Title id="contained-modal-title-vcenter">
-                    Изменить марку
+                    Добавить новую Модель
                 </Modal.Title>
             </Modal.Header>
             <Modal.Body>
@@ -62,20 +73,19 @@ const ChangeBrand = ({show, onHide, onBrandChanged}) => {
                         </Dropdown.Menu>
                     </Dropdown>
                     <Form.Control
-                        className={'mt-2'}
-                        placeholder={"Введите название марки автомобиля"}
+                        placeholder={"Введите название модели автомобиля"}
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
-
+                        className={"mt-2"}
                     />
                 </Form>
             </Modal.Body>
             <Modal.Footer>
-                <Button variant={"outline-danger"} onClick={handleExit } >Закрыть</Button>
-                <Button variant={"outline-success"} onClick={handleSubmit}>Изменить</Button>
+                <Button variant={"outline-danger"} onClick={handleClose}>Закрыть</Button>
+                <Button variant={"outline-success"} onClick={handleSubmit}>Добавить</Button>
             </Modal.Footer>
         </Modal>
     );
-};
+});
 
-export default ChangeBrand;
+export default CreateModel;

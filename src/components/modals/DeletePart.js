@@ -7,13 +7,13 @@ import {observer} from "mobx-react-lite";
 const ChangeBrand = observer(({show, onHide, onPartChanged}) => {
     const {part} = useContext(Context);
     const [selectedPart, setSelectedPart] = useState(null);
-    const [selectedPartId, setSelectedPartId] = useState(null);
+    const [selectedPartId, setSelectedPartId] = useState(0);
 
     useEffect(() => {
         fetchParts().then(data => part.setParts(data));
     }, [part]);
 
-    const handleSelect = (id,part) => {
+    const handleSelect = (id, part) => {
         setSelectedPart(part);
         setSelectedPartId(id);
     };
@@ -22,16 +22,19 @@ const ChangeBrand = observer(({show, onHide, onPartChanged}) => {
         try {
             await deletePart(selectedPartId);
             setSelectedPart(null);
+            setSelectedPartId(0);
             onHide();
             onPartChanged();
         } catch (error) {
-            console.error("Ошибка при обновлении детали:", error);
+            alert(error.response.data.message);
         }
     };
 
     const handleExit = () => {
         onHide();
         setSelectedPart(null);
+        setSelectedPartId(0);
+
     };
 
     return (

@@ -4,11 +4,21 @@ import {deleteCar} from "../../http/carAPI";
 
 const DeleteCar = ({show, onHide, car_delete, onCarDeleted}) => {
     const delCar = () => {
-        deleteCar(car_delete.id);
-        onCarDeleted();
-        onHide();
+        try {
+            deleteCar(car_delete.id);
+            onCarDeleted();
+            onHide();
+        } catch (error) {
+            if (error.response && error.response.data && error.response.data.message) {
+                alert(error.response.data.message);
+            } else {
+                alert('Ошибка при удалении автомобиля');
+            }
+        }
+
 
     }
+
     return (
         <Modal
             show={show}

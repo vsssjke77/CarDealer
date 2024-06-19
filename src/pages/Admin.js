@@ -19,15 +19,23 @@ import DeletePart from "../components/modals/DeletePart";
 
 import {CAR_ROUTE} from "../utils/consts";
 import {useNavigate} from "react-router-dom";
+import {fetchModels} from "../http/modelAPI";
+import CreateModel from "../components/modals/CreateModel";
+import ChangeModel from "../components/modals/ChangeModel";
+import DeleteModel from "../components/modals/DeleteModel";
+import {fetchParts} from "../http/partAPI";
 
 
 const Admin = observer(() => {
-    const {car, brand} = useContext(Context);
+    const {car, brand,model,part} = useContext(Context);
     const navigate = useNavigate()
 
     const [brandVisible, setBrandVisible] = useState(false);
     const [brandChangeVisible, setBrandChangeVisible] = useState(false);
     const [brandDeleteVisible, setBrandDeleteVisible] = useState(false);
+    const [modelVisible, setModelVisible] = useState(false);
+    const [modelChangeVisible, setModelChangeVisible] = useState(false);
+    const [modelDeleteVisible, setModelDeleteVisible] = useState(false);
     const [carVisible, setCarVisible] = useState(false);
     const [partVisible, setPartVisible] = useState(false);
     const [partChangeVisible, setPartChangeVisible] = useState(false);
@@ -42,9 +50,11 @@ const Admin = observer(() => {
 
     useEffect(() => {
         fetchBrands().then(data => brand.setBrands(data))
+        fetchModels().then(data => model.setModels(data))
+        fetchParts().then(data => part.setParts(data));
         fetchCars().then(data => car.setCars(data.rows))
         setDataChanged(false);
-    }, [brand, car, dataChanged]);
+    }, [brand, car, dataChanged,part]);
 
     const handleEditClick = (car) => {
         setChangeVisible(true); // Показать модальное окно изменения информации о машине
@@ -55,16 +65,11 @@ const Admin = observer(() => {
         setSelectedCar(car); // Сохранить выбранную машину в состоянии
     };
 
-    const handleCarChanged = () => {
+    const handleDataChanged = () => {
         setDataChanged(!dataChanged); // Обновляем состояние для вызова useEffect
     };
 
-    const handleBrandChanged = () => {
-        setDataChanged(!dataChanged); // Обновляем состояние для вызова useEffect
-    };
-    const handlePartChanged = () => {
-        setDataChanged(!dataChanged); // Обновляем состояние для вызова useEffect
-    };
+
 
 
     return (
@@ -84,7 +89,21 @@ const Admin = observer(() => {
 
                     </Dropdown.Menu>
                 </Dropdown>
-                <Button variant={"light"} onClick={() => setCarVisible(true)}>Добавить автомобиль</Button>
+                <Dropdown as={ButtonGroup}>
+
+                    <Dropdown.Toggle variant="light"
+                                     id="dropdown-split-basic">{"Выберите действие с моделями"}</Dropdown.Toggle>
+
+                    <Dropdown.Menu style={{width:'100%'}}>
+                        <Dropdown.Item onClick={() => setModelVisible(true)}>Добавить модель автомобиля</Dropdown.Item>
+                        <Dropdown.Item onClick={() => setModelChangeVisible(true)}>Изменить модель
+                            автомобиля</Dropdown.Item>
+                        <Dropdown.Item onClick={() => setModelDeleteVisible(true)}>Удалить модель
+                            автомобиля</Dropdown.Item>
+
+                    </Dropdown.Menu>
+                </Dropdown>
+
                 <Dropdown as={ButtonGroup}>
 
                     <Dropdown.Toggle variant="light"
@@ -99,37 +118,54 @@ const Admin = observer(() => {
 
                     </Dropdown.Menu>
                 </Dropdown>
-                <Button variant={"light"} onClick={() => setMaintenanceVisible(true)}>Добавить запись ТО</Button>
+
                 <CreateBrand show={brandVisible} onHide={() => {
                     setBrandVisible(false)
-                }} onBrandChanged={handleBrandChanged}/>
-                <CreateCar show={carVisible} onHide={() => {
-                    setCarVisible(false)
-                }} onCarAdded={handleCarChanged}/>
+                }} onBrandChanged={handleDataChanged}/>
+                <CreateModel show={modelVisible} onHide={() => {
+                    setModelVisible(false)
+                }} onModelChanged={handleDataChanged}/>
+
+
+
                 <CreatePart show={partVisible} onHide={() => {
                     setPartVisible(false)
-                }}/>
+                }} onPartChanged={handleDataChanged}/>
+
+                <ChangeBrand show={brandChangeVisible} onHide={() => {
+                    setBrandChangeVisible(false)
+                }} onBrandChanged={handleDataChanged}/>
+                <DeleteBrand show={brandDeleteVisible} onHide={() => {
+                    setBrandDeleteVisible(false)
+                }} onBrandChanged={handleDataChanged}/>
+                <ChangeModel show={modelChangeVisible} onHide={() => {
+                    setModelChangeVisible(false)
+                }} onModelChanged={handleDataChanged}/>
+                <DeleteModel show={modelDeleteVisible} onHide={() => {
+                    setModelDeleteVisible(false)
+                }} onModelChanged={handleDataChanged}/>
+                <ChangePart show={partChangeVisible} onHide={() => {
+                    setPartChangeVisible(false)
+                }} onPartChanged={handleDataChanged}/>
+                <DeletePart show={partDeleteVisible} onHide={() => {
+                    setPartDeleteVisible(false)
+                }} onPartChanged={handleDataChanged}/>
+                {changeVisible && <ChangeInfoCar show={changeVisible} car_change={selectedCar} onHide={() => {
+                    setChangeVisible(false)
+                }} onCarChanged={handleDataChanged}/>}
+                {deleteVisible && <DeleteCar show={deleteVisible} car_delete={selectedCar} onHide={() => {
+                    setDeleteVisible(false)
+                }} onCarDeleted={handleDataChanged}/>}
+            </div>
+            <div className="text-center d-flex justify-content-around mt-3">
+                <Button variant={"light"} onClick={() => setCarVisible(true)}>Добавить автомобиль</Button>
+                <Button variant={"light"} onClick={() => setMaintenanceVisible(true)}>Добавить запись ТО</Button>
+                <CreateCar show={carVisible} onHide={() => {
+                    setCarVisible(false)
+                }} onCarAdded={handleDataChanged}/>
                 <CreateMaintenance show={maintenanceVisible} onHide={() => {
                     setMaintenanceVisible(false)
                 }}/>
-                <ChangeBrand show={brandChangeVisible} onHide={() => {
-                    setBrandChangeVisible(false)
-                }} onBrandChanged={handleBrandChanged}/>
-                <DeleteBrand show={brandDeleteVisible} onHide={() => {
-                    setBrandDeleteVisible(false)
-                }} onBrandChanged={handleBrandChanged}/>
-                <ChangePart show={partChangeVisible} onHide={() => {
-                    setPartChangeVisible(false)
-                }} onPartChanged={handlePartChanged}/>
-                <DeletePart show={partDeleteVisible} onHide={() => {
-                    setPartDeleteVisible(false)
-                }} onPartChanged={handlePartChanged}/>
-                {changeVisible && <ChangeInfoCar show={changeVisible} car_change={selectedCar} onHide={() => {
-                    setChangeVisible(false)
-                }} onCarChanged={handleCarChanged}/>}
-                {deleteVisible && <DeleteCar show={deleteVisible} car_delete={selectedCar} onHide={() => {
-                    setDeleteVisible(false)
-                }} onCarDeleted={handleCarChanged}/>}
             </div>
             <h2 className={"justify-content-center text-center mt-2 text-white"}>
                 Все автомобили
@@ -154,7 +190,7 @@ const Admin = observer(() => {
                     <tr key={car.id}>
                         <td>{car.id}</td>
                         <td>{brand.getBrandTitleById(car.brand_id)}</td>
-                        <td>{car.model}</td>
+                        <td>{model.getModelTitleById(car.model_id)}</td>
                         <td>{car.price.toLocaleString('ru-RU', {
                             style: 'currency',
                             currency: 'RUB',

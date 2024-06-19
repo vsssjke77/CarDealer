@@ -20,7 +20,11 @@ const ChangeBrand = observer(({show, maintenance_item, onHide, onDeleteMaintenan
             onDataChanged();
             onHide();
         } catch (error) {
-            console.error("Ошибка при обновлении детали:", error);
+            if (error.response && error.response.data && error.response.data.message) {
+                alert(error.response.data.message);
+            } else {
+                alert('Ошибка при удалении записи ТО');
+            }
         }
     };
 

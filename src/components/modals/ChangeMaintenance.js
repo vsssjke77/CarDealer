@@ -31,8 +31,19 @@ const ChangeMaintenance = observer(({show, maintenance_item, onHide, onChangeMai
             onHide(); // Закрытие модального окна после успешного добавления
 
         } catch (error) {
-            console.error("Ошибка при добавлении записи ТО:", error);
-            // Добавьте обработку ошибки, если необходимо
+            if (error.response && error.response.data && error.response.data.message) {
+                alert(error.response.data.message);
+            } else {
+                alert('Ошибка при изменении записи ТО');
+            }
+        }
+    };
+
+
+
+    const handleKeyDown = (e) => {
+        if (e.key === '-' || e.key === 'e' || e.key === 'E' || e.key === '+'|| e.key === '/' || e.key === '*') {
+            e.preventDefault();
         }
     };
 
@@ -65,6 +76,7 @@ const ChangeMaintenance = observer(({show, maintenance_item, onHide, onChangeMai
                         type={"number"}
                         value={partCount}
                         onChange={(e) => setPartCount(e.target.value)}
+                        onKeyDown={handleKeyDown}
                     />
                     <Dropdown className={"mt-2"}>
                         <Dropdown.Toggle>{selectedPartInfo || 'Выберите деталь'}</Dropdown.Toggle>
@@ -94,7 +106,7 @@ const ChangeMaintenance = observer(({show, maintenance_item, onHide, onChangeMai
             </Modal.Body>
             <Modal.Footer>
                 <Button variant={"outline-danger"} onClick={onHide}>Закрыть</Button>
-                <Button variant={"outline-success"} onClick={handleSubmit}>Добавить</Button>
+                <Button variant={"outline-success"} onClick={handleSubmit}>Изменить</Button>
             </Modal.Footer>
         </Modal>
     );
